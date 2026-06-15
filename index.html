@@ -399,8 +399,14 @@ function fmt(utc){const dt=new Date(utc),o={timeZone:TZ};
   key:dt.toLocaleDateString("en-CA",o)};}
 function status(utc){const k=+new Date(utc),n=Date.now();
  if(n<k)return{k:"up",t:"Upcoming"};if(n<k+115*6e4)return{k:"live",t:"Live"};return{k:"ft",t:"Finished"};}
-function mStatus(m){if(m&&m.fs==="FINISHED")return{k:"ft",t:"Finished"};
- if(m&&(m.fs==="IN_PLAY"||m.fs==="PAUSED"))return{k:"live",t:"Live"};return status(m.utc);}
+function mStatus(m){const k=+new Date(m.utc),n=Date.now();
+ if(m&&m.fs==="FINISHED")return{k:"ft",t:"Finished"};   // official result in -> done
+ if(n<k)return{k:"up",t:"Upcoming"};                     // clock hasn't reached kickoff
+ if(n<k+210*6e4){                                        // inside a sane 3.5h match window
+   if(m&&(m.fs==="IN_PLAY"||m.fs==="PAUSED"))return{k:"live",t:"Live"};
+   if(n<k+115*6e4)return{k:"live",t:"Live"};             // ~first 2h counts as live
+ }
+ return{k:"ft",t:"Finished"};}                            // past the window -> always finished
 function cdText(utc){let s=Math.floor((+new Date(utc)-Date.now())/1e3);if(s<0)return"";
  const d=s/86400|0;s-=d*86400;const h=s/3600|0;s-=h*3600;const m=s/60|0;s-=m*60;
  return `<span><b>${d}</b>d</span><span><b>${h}</b>h</span><span><b>${m}</b>m</span><span><b>${s}</b>s</span>`;}
